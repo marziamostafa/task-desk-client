@@ -1,5 +1,10 @@
+import AuditLogs from "@/components/AuditLogs/AuditLogs";
 import React from "react";
 
 export default function page() {
-  return <div></div>;
+  return (
+    <div>
+      <AuditLogs />
+    </div>
+  );
 }
