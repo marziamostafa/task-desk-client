@@ -2,7 +2,7 @@
 
 import PrivateRoute from "@/components/PrivateRoute/PrivateRoute";
 import SideNavbar from "@/components/SideNavbar/SideNavbar";
-import React from "react";
+import React, { useEffect } from "react";
 
 export default function UserLayout({
   children,
@@ -13,6 +13,9 @@ export default function UserLayout({
     localStorage.clear(); // Clear all localStorage items
     window.location.href = "/"; // Redirect to login page
   };
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL_API}/health`).catch(() => {});
+  }, []);
 
   return (
     <div className="h-full flex flex-col">

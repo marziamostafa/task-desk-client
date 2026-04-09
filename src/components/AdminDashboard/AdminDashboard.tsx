@@ -34,15 +34,17 @@ export default function AdminDashboard() {
     fetchUsers();
   }, []);
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (retries = 3) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
       const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL_API}/tasks`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
 
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
       const mappedTasks: Task[] = data.map((t: Task) => ({
         id: t.id,
         title: t.title,
@@ -55,10 +57,14 @@ export default function AdminDashboard() {
         assignedToUser: t.assignedToUser,
         assignedByUser: t.assignedByUser,
       }));
-
       setTasks(mappedTasks);
     } catch (error) {
-      console.error(error);
+      if (retries > 0) {
+        console.warn(`Retrying... attempts left: ${retries}`);
+        setTimeout(() => fetchTasks(retries - 1), 3000); // retry after 3s
+      } else {
+        console.error("Failed to fetch tasks after retries", error);
+      }
     } finally {
       setLoading(false);
     }
