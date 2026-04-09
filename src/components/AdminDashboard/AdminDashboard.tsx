@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import AddTasks from "./AddTasks";
 
 interface Task {
   id: string;
@@ -50,12 +51,9 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <div className="w-full flex items-center justify-between my-2">
-        <span className="text-4xl">Task Management</span>
-        <button className="text-2xl px-2 py-1 bg-blue-500 text-white rounded">
-          Add Task
-        </button>
-      </div>
+      <AddTasks
+        onTaskCreated={(newTask: Task) => setTasks([...tasks, newTask])}
+      />
       <div>
         <div className="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
           <table className="table w-full">
@@ -75,7 +73,7 @@ export default function AdminDashboard() {
                 <tr key={task.id}>
                   <th>{i + 1}</th>
                   <td>{task.title}</td>
-                  <td>{task.assignedToUser.username}</td>
+                  <td>{task.assignedToUser?.username || "N/A"}</td>
                   <td>
                     <span
                       className={`px-2 py-1 rounded text-white text-xs ${
