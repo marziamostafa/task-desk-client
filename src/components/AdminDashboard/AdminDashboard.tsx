@@ -14,7 +14,7 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  status: "PENDING" | "PROCESSING" | "COMPLETED";
+  status: "PENDING" | "PROCESSING" | "DONE";
   assignedTo: string | null; // user ID
   assignedBy: string | null; // user ID
   createdAt: string;

@@ -54,11 +54,7 @@ export default function EditTaskModal({
   };
 
   const handleStatusChange = (value: string) => {
-    if (
-      value === "PENDING" ||
-      value === "PROCESSING" ||
-      value === "COMPLETED"
-    ) {
+    if (value === "PENDING" || value === "PROCESSING" || value === "DONE") {
       setStatus(value);
     }
   };
@@ -70,7 +66,7 @@ export default function EditTaskModal({
   >
     <option value="PENDING">PENDING</option>
     <option value="PROCESSING">PROCESSING</option>
-    <option value="COMPLETED">COMPLETED</option>
+    <option value="COMPLETED">DONE</option>
   </select>;
 
   return (
@@ -102,14 +98,12 @@ export default function EditTaskModal({
             className="select select-bordered w-full"
             value={status}
             onChange={(e) =>
-              setStatus(
-                e.target.value as "PENDING" | "PROCESSING" | "COMPLETED",
-              )
+              setStatus(e.target.value as "PENDING" | "PROCESSING" | "DONE")
             }
           >
             <option value="PENDING">PENDING</option>
             <option value="PROCESSING">PROCESSING</option>
-            <option value="COMPLETED">COMPLETED</option>
+            <option value="DONE">DONE</option>
           </select>
 
           <select
