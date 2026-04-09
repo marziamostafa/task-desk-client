@@ -1,8 +1,7 @@
-// import AdminSideNavbar from "@/components/SideNavbar/SideNavbar";
-
 import SideNavbar from "@/components/SideNavbar/SideNavbar";
+import React from "react";
 
-export default function AdminLayout({
+export default function UserLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
