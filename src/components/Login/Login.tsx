@@ -17,6 +17,7 @@ export default function Login() {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<Inputs>();
 
   const router = useRouter();
@@ -73,6 +74,18 @@ export default function Login() {
       setError("Login failed. Please check your credentials.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAutoFill = (role: "admin" | "user") => {
+    if (role === "admin") {
+      // Set admin credentials
+      setValue("email", "marzia@gmail.com");
+      setValue("password", "1234"); // Replace with actual admin password
+    } else {
+      // Set user credentials
+      setValue("email", "user@gmail.com");
+      setValue("password", "12345"); // Replace with actual user password
     }
   };
 
@@ -142,6 +155,27 @@ export default function Login() {
             Register
           </a>
         </p> */}
+
+        {/* Auto-fill buttons */}
+        <div className="mt-5">
+          <p className="text-center text-sm">Quick login (demo credentials):</p>
+          <div className="flex justify-between mt-4 gap-4">
+            <button
+              type="button"
+              className="w-1/2 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+              onClick={() => handleAutoFill("admin")}
+            >
+              Admin
+            </button>
+            <button
+              type="button"
+              className="w-1/2 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              onClick={() => handleAutoFill("user")}
+            >
+              User
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
