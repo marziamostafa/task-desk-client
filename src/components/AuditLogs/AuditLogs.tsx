@@ -187,6 +187,12 @@ export default function AuditLogs() {
                 </div>
               )}
 
+              {Array.isArray(changes) && changes.length === 0 && (
+                <span className="text-xs text-gray-400">
+                  No meaningful changes
+                </span>
+              )}
+
               <p className="text-xs text-gray-300 font-mono mt-1.5 truncate">
                 {log.entityId}
               </p>
