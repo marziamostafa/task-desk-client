@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { fetchWithRetry } from "@/lib/fetchWithRetry";
+import React, { useCallback, useEffect, useState } from "react";
 
 interface Task {
   id: string;
@@ -88,32 +89,41 @@ function ActionBadge({ action }: { action: string }) {
 export default function AuditLogs() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAuditLogs = useCallback(async () => {
+    // ← useCallback so we can call it from Retry button
+    try {
+      setLoading(true);
+      setError(null); // ← reset error on each attempt
+      const token = localStorage.getItem("token");
+      const response = await fetchWithRetry(
+        // ← swap fetch for fetchWithRetry
+        `${process.env.NEXT_PUBLIC_BASE_URL_API}/audit-logs`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      const data: AuditLog[] = await response.json();
+      setLogs(data);
+    } catch (error) {
+      console.error("Error fetching audit logs:", error);
+      setError(
+        "Could not load audit logs. The server may still be starting up.",
+      ); // ← set error
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function fetchAuditLogs() {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL_API}/audit-logs`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-        if (!response.ok)
-          throw new Error(`HTTP error! status: ${response.status}`);
-        const data: AuditLog[] = await response.json();
-        setLogs(data);
-      } catch (error) {
-        console.error("Error fetching audit logs:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchAuditLogs();
-  }, []);
+  }, [fetchAuditLogs]);
 
   if (loading)
     return (

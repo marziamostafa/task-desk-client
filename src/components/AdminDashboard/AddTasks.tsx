@@ -1,5 +1,8 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { Task } from "./AdminDashboard";
+import { fetchWithRetry } from "@/lib/fetchWithRetry";
 
 interface User {
   id: string;
@@ -19,54 +22,60 @@ export default function AddTasks({ onTaskCreated }: AddTasksProps) {
   const [assignedTo, setAssignedTo] = useState("");
 
   useEffect(() => {
+    const controller = new AbortController(); // ← abort controller
+
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(
+        const res = await fetchWithRetry(
+          // ← fetchWithRetry
           `${process.env.NEXT_PUBLIC_BASE_URL_API}/users`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal, // ← pass signal
           },
         );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setUsers(data);
-      } catch (error) {
+      } catch (error: any) {
+        if (error.name === "AbortError") return; // ← ignore Strict Mode cancellations
         console.error("Failed to fetch users:", error);
       } finally {
         setLoadingUsers(false);
       }
     };
+
     fetchUsers();
+    return () => controller.abort(); // ← cleanup on unmount
   }, []);
 
   const handleCreateTask = async () => {
     try {
       const token = localStorage.getItem("token");
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL_API}/tasks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const res = await fetchWithRetry(
+        // ← swap fetch → fetchWithRetry
+        `${process.env.NEXT_PUBLIC_BASE_URL_API}/tasks`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            title,
+            description,
+            status: "PENDING",
+            assignedTo,
+          }),
         },
-        body: JSON.stringify({
-          title,
-          description,
-          status: "PENDING",
-          assignedTo,
-        }),
-      });
+      );
 
       if (!res.ok) throw new Error("Failed to create task");
 
       const newTask = await res.json();
-
-      // Update parent component
       onTaskCreated(newTask);
 
-      // Close modal and reset
       const modal = document.getElementById(
         "add_task_modal",
       ) as HTMLDialogElement;
@@ -76,7 +85,9 @@ export default function AddTasks({ onTaskCreated }: AddTasksProps) {
       setAssignedTo("");
     } catch (error) {
       console.error(error);
-      alert("Failed to create task");
+      alert(
+        "Failed to create task. Server may be starting up, please try again.",
+      );
     }
   };
 
@@ -94,7 +105,6 @@ export default function AddTasks({ onTaskCreated }: AddTasksProps) {
         Add Task
       </button>
 
-      {/* Modal */}
       <dialog id="add_task_modal" className="modal">
         <div className="modal-box">
           <form

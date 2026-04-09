@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { fetchWithRetry } from "@/lib/fetchWithRetry";
 
 interface User {
   id: string;
@@ -17,31 +18,39 @@ function getInitials(name: string) {
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function fetchUsers() {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(
+        const response = await fetchWithRetry(
           `${process.env.NEXT_PUBLIC_BASE_URL_API}/users`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
+            signal: controller.signal,
           },
         );
         if (!response.ok)
           throw new Error(`HTTP error! status: ${response.status}`);
         const data: User[] = await response.json();
         setUsers(data);
-      } catch (error) {
+      } catch (error: any) {
+        if (error.name === "AbortError") return;
         console.error("Error fetching users:", error);
+        setError("Could not load users. Server may still be starting up.");
       } finally {
         setLoading(false);
       }
     }
+
     fetchUsers();
+    return () => controller.abort();
   }, []);
 
   if (loading)
@@ -51,7 +60,21 @@ export default function Users() {
       </div>
     );
 
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <p className="text-sm text-red-400">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+
   return (
+    // ... your JSX stays completely unchanged
     <div>
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-lg font-medium">Users</h2>
@@ -74,7 +97,6 @@ export default function Users() {
           <tbody className="divide-y divide-gray-50 bg-white">
             {users.map((user) => (
               <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                {/* User */}
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-800 flex items-center justify-center text-xs font-medium flex-shrink-0">
@@ -85,11 +107,7 @@ export default function Users() {
                     </span>
                   </div>
                 </td>
-
-                {/* Email */}
                 <td className="px-4 py-3 text-gray-500">{user.email}</td>
-
-                {/* Role */}
                 <td className="px-4 py-3">
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded ${
@@ -101,8 +119,6 @@ export default function Users() {
                     {user.role.toLowerCase()}
                   </span>
                 </td>
-
-                {/* Joined */}
                 <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
                   {new Date(user.createdAt).toLocaleDateString("en-US", {
                     month: "short",
@@ -110,8 +126,6 @@ export default function Users() {
                     year: "numeric",
                   })}
                 </td>
-
-                {/* ID */}
                 <td className="px-4 py-3">
                   <span className="text-xs text-gray-300 font-mono">
                     {user.id}
