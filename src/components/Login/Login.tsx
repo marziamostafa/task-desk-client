@@ -2,13 +2,10 @@
 
 import Loader from "@/app/loading";
 import { UserLoginResponse } from "@/app/types/user";
-
-import { fetchWithRetry } from "@/lib/fetchWithRetry"; // ← 2. import
 import { Button } from "@mui/material";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { waitForServer } from "../ServerPing/WaitForServer";
 
 interface Inputs {
   email: string;
@@ -26,22 +23,13 @@ export default function Login() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [serverReady, setServerReady] = useState(false); // ← 3. add state
-
-  // ← 4. wait for server on mount
-  useEffect(() => {
-    waitForServer().then(() => setServerReady(true));
-  }, []);
 
   const onSubmit: SubmitHandler<Inputs> = async (formData) => {
     setIsLoading(true);
     setError(null);
+    // console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
     try {
-      // ← 5. wait for server before firing request
-      await waitForServer();
-
-      const response = await fetchWithRetry(
-        // ← 6. fetchWithRetry instead of fetch
+      const response = await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL_API}/users/login`,
         {
           method: "POST",
@@ -55,9 +43,12 @@ export default function Login() {
       }
 
       const data: UserLoginResponse = await response.json();
+
+      // Access the token
       const token = data.accessToken;
       localStorage.setItem("token", token);
 
+      // Decode JWT to get user info
       const payload = JSON.parse(atob(token.split(".")[1]));
       localStorage.setItem("user", payload.email);
       localStorage.setItem("role", payload.role);
@@ -65,6 +56,14 @@ export default function Login() {
       localStorage.setItem("name", payload.username ?? "");
 
       alert("Login successful");
+
+      // const dashboardRoles = ["admin", "super admin"];
+
+      // router.push(
+      //   dashboardRoles.includes(payload.role?.toLowerCase())
+      //     ? "/dashboard"
+      //     : "/",
+      // );
 
       const email = localStorage.getItem("user");
       router.push(
@@ -80,29 +79,24 @@ export default function Login() {
 
   const handleAutoFill = (role: "admin" | "user") => {
     if (role === "admin") {
+      // Set admin credentials
       setValue("email", "marzia@gmail.com");
-      setValue("password", "1234");
+      setValue("password", "1234"); // Replace with actual admin password
     } else {
+      // Set user credentials
       setValue("email", "user@gmail.com");
-      setValue("password", "12345");
+      setValue("password", "12345"); // Replace with actual user password
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col justify-center items-center px-4">
+    <div className="min-h-screen w-full  flex flex-col justify-center items-center px-4">
       {isLoading && <Loader />}
 
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md border border-gray-200">
         <h1 className="text-2xl font-semibold text-center text-[#1586FD] mb-6">
           Sign in
         </h1>
-
-        {/* ← 7. server warm-up banner */}
-        {!serverReady && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm px-4 py-2 rounded-lg text-center mb-4">
-            Server is starting up, please wait...
-          </div>
-        )}
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
@@ -141,7 +135,6 @@ export default function Login() {
             )}
           </div>
 
-          {/* ← 8. disable button until server ready */}
           <Button
             type="submit"
             fullWidth
@@ -150,16 +143,20 @@ export default function Login() {
               backgroundColor: "#1586FD",
               "&:hover": { backgroundColor: "#0f6edc" },
             }}
-            disabled={isLoading || !serverReady}
+            disabled={isLoading}
           >
-            {!serverReady
-              ? "Waiting for server..."
-              : isLoading
-                ? "Logging in..."
-                : "Login"}
+            {isLoading ? "Logging in..." : "Login"}
           </Button>
         </form>
 
+        {/* <p className="text-sm text-center text-gray-600 mt-4">
+          Don’t have an account?{" "}
+          <a href="/register" className="text-[#1586FD] font-medium underline">
+            Register
+          </a>
+        </p> */}
+
+        {/* Auto-fill buttons */}
         <div className="mt-5">
           <p className="text-center text-sm">Quick login (demo credentials):</p>
           <div className="flex justify-between mt-4 gap-4">
