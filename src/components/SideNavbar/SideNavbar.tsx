@@ -39,14 +39,11 @@ export default function SideNavbar() {
       {itemsToRender.map((item, index) => (
         <div key={index} className="mb-1">
           {/* Main menu item */}
-          <div
-            className="flex justify-between items-center cursor-pointer text-white hover:bg-[#5A8CC4] p-2 rounded"
-            onClick={() =>
-              setOpenDropdownId(openDropdownId === index ? null : index)
-            }
-          >
-            <span className="text-white">{item.menu_title}</span>
-          </div>
+          <Link href={item.menu_url}>
+            <div className="flex justify-between items-center cursor-pointer text-white hover:bg-[#5A8CC4] p-2 rounded">
+              <span>{item.menu_title}</span>
+            </div>
+          </Link>
         </div>
       ))}
     </div>

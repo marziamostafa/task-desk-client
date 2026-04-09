@@ -2,7 +2,7 @@ export const DashboardItems = [
   {
     menu_title: "Dashboard",
 
-    menu_url: "/dashboard",
+    menu_url: "/admin-dashboard",
   },
   {
     menu_title: "Audit Logs",
